@@ -1,6 +1,5 @@
 # LocalDeepResearch
 
-# DeepResearch
 
 A comprehensive AI-powered research platform that combines autonomous research agents with interactive chat capabilities.
 
