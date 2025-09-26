@@ -13,7 +13,7 @@ A comprehensive AI-powered research platform that combines autonomous research a
 
 ## Demo
 
-![DeepResearch Dashboard](docs/images/dashboard.png)
+![[DeepResearch Dashboard](docs/images/dashboard.png](https://github.com/gopinath87607/LocalDeepResearch/blob/main/Screencast%20from%202025-09-26%2020-11-24.webm))
 
 ## Quick Start
 
