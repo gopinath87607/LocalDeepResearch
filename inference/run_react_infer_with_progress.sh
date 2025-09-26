@@ -24,7 +24,7 @@ export PRESENCE_PENALTY="${PRESENCE_PENALTY:-1.1}"
 export MAX_WORKERS=1
 
 ## API keys - Updated for local setup
-export SERPER_KEY_ID="${SERPER_KEY_ID:-c96ef5ad994935222ce5a79208d5979e0073d14d}"
+export SERPER_KEY_ID="${SERPER_KEY_ID:-c9}"
 # REMOVED: Jina API key (using local ReaderLM instead)
 export JINA_API_KEYS=""  # Disable external Jina API
 export API_KEY="${API_KEY:-dummy-key}"
