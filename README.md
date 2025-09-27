@@ -118,7 +118,7 @@ Visit `http://localhost:3000` and start researching!
 - **Other APIs**: Optional depending on tools used
 
 ### Models
-- **Main Model**: Any instruction-following model ([Qwen-2.5, Llama-3.1](https://huggingface.co/Alibaba-NLP/Tongyi-DeepResearch-30B-A3B), [Jan-v1-2509-gguf](https://huggingface.co/janhq/Jan-v1-2509-gguf), etc.)
+- **Main Model**: Any instruction-following model ([Tongyi-DeepResearch, Jan-v1](https://huggingface.co/Alibaba-NLP/Tongyi-DeepResearch-30B-A3B), [Jan-v1-2509-gguf](https://huggingface.co/janhq/Jan-v1-2509-gguf), etc.)
 - **ReaderLM**: [jinaai/ReaderLM-v2](https://huggingface.co/jinaai/ReaderLM-v2) for better web content extraction
 - **Tongyi-DeepResearch-30B-A3B**: Available at [🤗 HuggingFace](https://huggingface.co/Alibaba-NLP/Tongyi-DeepResearch-30B-A3B) or [🤖 ModelScope](https://modelscope.cn/models/iic/Tongyi-DeepResearch-30B-A3B)
 
