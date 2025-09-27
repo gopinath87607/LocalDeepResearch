@@ -15,7 +15,7 @@ A comprehensive AI-powered research platform that combines autonomous research a
 ### Video Demo
 ![Demo Video](https://github.com/gopinath87607/LocalDeepResearch/blob/main/Screencast%20from%202025-09-26%2020-11-24.webm)
 
-*Note: If the video doesn't play directly in GitHub, you can [view it here](https://github.com/gopinath87607/LocalDeepResearch/blob/main/Screencast%20from%202025-09-26%2020-11-24.webm)*
+*Note: If the video doesn't play directly in GitHub, you can [dowload it here](https://github.com/gopinath87607/LocalDeepResearch/blob/main/Screencast%20from%202025-09-26%2020-11-24.webm)*
 
 ### Screenshots
 
