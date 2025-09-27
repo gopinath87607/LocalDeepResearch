@@ -12,6 +12,8 @@ import glob
 import re  # For parsing logs
 from urllib.parse import urlparse
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000", "http://localhost:3001"])
@@ -21,9 +23,29 @@ research_sessions = {}
 active_connections = {}
 chat_sessions = {}
 
+def create_robust_session():
+    """Create a requests session with basic configuration"""
+    session = requests.Session()
+    # Skip retry strategy to avoid version conflicts
+    return session
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify({"status": "healthy"})
+
+@app.route('/api/model/health', methods=['GET'])
+def model_health_check():
+    """Check if model server is responding"""
+    try:
+        api_base = os.environ.get("API_BASE", "http://localhost:8080/v1")
+        health_url = api_base.replace('/v1', '/health')
+        response = requests.get(health_url, timeout=5)
+        if response.status_code == 200:
+            return jsonify({"status": "healthy", "model_server": "online"})
+        else:
+            return jsonify({"status": "unhealthy", "model_server": "error", "code": response.status_code}), 503
+    except Exception as e:
+        return jsonify({"status": "unhealthy", "model_server": "offline", "error": str(e)}), 503
 
 @app.route('/api/research/start', methods=['POST'])
 def start_research():
@@ -77,15 +99,33 @@ def send_chat_message():
     })
     
     # Send chat response in background thread
-    thread = threading.Thread(target=handle_chat_message, args=(session_id, message))
+    thread = threading.Thread(target=handle_chat_message_streaming, args=(session_id, message))
     thread.daemon = True
     thread.start()
     
     return jsonify({"status": "processing"})
 
-def handle_chat_message(session_id, user_message):
-    """Handle chat message with main model"""
+def check_model_server():
+    """Check if model server is responding"""
     try:
+        api_base = os.environ.get("API_BASE", "http://localhost:8080/v1")
+        health_url = api_base.replace('/v1', '/health')
+        response = requests.get(health_url, timeout=5)
+        return response.status_code == 200
+    except:
+        return False
+
+def handle_chat_message_streaming(session_id, user_message):
+    """Handle chat message with streaming support for better responsiveness"""
+    try:
+        # Check if model server is online
+        if not check_model_server():
+            send_update(session_id, {
+                "type": "chat_error",
+                "message": "Model server is not responding. Please check if it's running on port 8080."
+            })
+            return
+
         chat_session = chat_sessions[session_id]
         research_context = chat_session.get("research_context", "")
         research_result = chat_session.get("research_result", "")
@@ -109,22 +149,16 @@ Please respond to the user's follow-up questions based on this context and your 
                 "content": msg["content"]
             })
         
-        # Call main model
-        response = call_main_model(messages)
+        # Try streaming first, fallback to regular call
+        response = call_model_with_streaming(session_id, messages)
         
-        # Add assistant response to chat history
-        chat_sessions[session_id]["messages"].append({
-            "role": "assistant",
-            "content": response,
-            "timestamp": time.strftime('%H:%M:%S')
-        })
-        
-        # Send response to frontend
-        send_update(session_id, {
-            "type": "chat_response",
-            "message": response,
-            "timestamp": time.strftime('%H:%M:%S')
-        })
+        if response:
+            # Add assistant response to chat history
+            chat_sessions[session_id]["messages"].append({
+                "role": "assistant",
+                "content": response,
+                "timestamp": time.strftime('%H:%M:%S')
+            })
         
     except Exception as e:
         print(f"Error in chat handling: {str(e)}")
@@ -133,8 +167,113 @@ Please respond to the user's follow-up questions based on this context and your 
             "message": f"Sorry, I encountered an error: {str(e)}"
         })
 
-def call_main_model(messages, max_retries=3):
-    """Call the main research model for chat"""
+def call_model_with_streaming(session_id, messages):
+    """Call model with streaming support for real-time responses"""
+    api_key = os.environ.get("API_KEY", "dummy-key")
+    api_base = os.environ.get("API_BASE", "http://localhost:8080/v1")
+    model_name = os.environ.get("SUMMARY_MODEL_NAME", "deepresearch")
+    
+    print(f"Calling model at: {api_base}/chat/completions with model: {model_name}")
+    
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+    
+    # Try streaming first
+    streaming_payload = {
+        "model": model_name,
+        "messages": messages,
+        "temperature": 0.7,
+        "max_tokens": 1500,
+        "stream": True
+    }
+    
+    try:
+        # Create robust session
+        session = create_robust_session()
+        
+        # Send streaming request
+        response = session.post(
+            f"{api_base}/chat/completions",
+            json=streaming_payload,
+            headers=headers,
+            timeout=(10, 120),  # (connect_timeout, read_timeout)
+            stream=True
+        )
+        
+        if response.status_code == 200:
+            print("Streaming response received, processing...")
+            full_response = ""
+            current_chunk = ""
+            
+            # Send initial response start signal
+            send_update(session_id, {
+                "type": "chat_stream_start",
+                "message": "Response starting...",
+                "timestamp": time.strftime('%H:%M:%S')
+            })
+            
+            for line in response.iter_lines():
+                if line:
+                    line_text = line.decode('utf-8')
+                    if line_text.startswith('data: '):
+                        data_part = line_text[6:]  # Remove 'data: ' prefix
+                        
+                        if data_part.strip() == '[DONE]':
+                            break
+                            
+                        try:
+                            chunk_data = json.loads(data_part)
+                            if 'choices' in chunk_data and len(chunk_data['choices']) > 0:
+                                delta = chunk_data['choices'][0].get('delta', {})
+                                if 'content' in delta:
+                                    content = delta['content']
+                                    if content is not None:  # Check for None content
+                                        current_chunk += content
+                                        full_response += content
+                                        
+                                        # Send chunk every few characters for smooth streaming
+                                        if len(current_chunk) >= 10:  # Send in small batches
+                                            send_update(session_id, {
+                                                "type": "chat_stream_chunk",
+                                                "chunk": current_chunk,
+                                                "full_response": full_response
+                                            })
+                                            current_chunk = ""
+                        except json.JSONDecodeError:
+                            continue
+            
+            # Send any remaining chunk
+            if current_chunk:
+                send_update(session_id, {
+                    "type": "chat_stream_chunk", 
+                    "chunk": current_chunk,
+                    "full_response": full_response
+                })
+            
+            # Send final response
+            send_update(session_id, {
+                "type": "chat_response",
+                "message": full_response,
+                "timestamp": time.strftime('%H:%M:%S')
+            })
+            
+            return full_response
+            
+        else:
+            print(f"Streaming failed with status {response.status_code}, trying non-streaming...")
+            return call_main_model_fallback(messages)
+            
+    except requests.exceptions.Timeout:
+        print("Streaming request timed out, trying non-streaming with longer timeout...")
+        return call_main_model_fallback(messages)
+    except Exception as e:
+        print(f"Streaming error: {str(e)}, trying non-streaming...")
+        return call_main_model_fallback(messages)
+
+def call_main_model_fallback(messages, max_retries=2):
+    """Fallback non-streaming call with longer timeout"""
     api_key = os.environ.get("API_KEY", "dummy-key")
     api_base = os.environ.get("API_BASE", "http://localhost:8080/v1")
     model_name = os.environ.get("SUMMARY_MODEL_NAME", "deepresearch")
@@ -148,17 +287,20 @@ def call_main_model(messages, max_retries=3):
         "model": model_name,
         "messages": messages,
         "temperature": 0.7,
-        "max_tokens": 1000,
+        "max_tokens": 1500,
         "stream": False
     }
     
     for attempt in range(max_retries):
         try:
-            response = requests.post(
+            # Create robust session
+            session = create_robust_session()
+            
+            response = session.post(
                 f"{api_base}/chat/completions",
                 json=payload,
                 headers=headers,
-                timeout=30
+                timeout=(10, 180)  # 3 minute read timeout for large models
             )
             
             if response.status_code == 200:
@@ -169,13 +311,22 @@ def call_main_model(messages, max_retries=3):
                 if attempt == max_retries - 1:
                     return "I'm having trouble connecting to the model. Please try again."
                     
+        except requests.exceptions.Timeout as e:
+            print(f"Timeout error on attempt {attempt + 1}: {str(e)}")
+            if attempt == max_retries - 1:
+                return "The model is taking too long to respond. This might be due to high server load. Please try again."
         except requests.RequestException as e:
             print(f"Request error on attempt {attempt + 1}: {str(e)}")
             if attempt == max_retries - 1:
                 return "I'm having trouble connecting to the model. Please check if the server is running."
-            time.sleep(1)
+            time.sleep(2)  # Wait before retry
     
     return "Unable to get response from the model after multiple attempts."
+
+# Keep the original function for backward compatibility
+def call_main_model(messages, max_retries=3):
+    """Original function - now calls the improved fallback"""
+    return call_main_model_fallback(messages, max_retries)
 
 @socketio.on('connect')
 def handle_connect():
@@ -508,4 +659,14 @@ def run_deepresearch_command(session_id, query):
 
 if __name__ == "__main__":
     print("Starting DeepResearch Flask Backend on http://localhost:8000")
+    print("Environment variables:")
+    print(f"  API_BASE: {os.environ.get('API_BASE', 'http://localhost:8080/v1')}")
+    print(f"  SUMMARY_MODEL_NAME: {os.environ.get('SUMMARY_MODEL_NAME', 'deepresearch')}")
+    
+    # Check model server on startup
+    if check_model_server():
+        print("✅ Model server is online")
+    else:
+        print("❌ Warning: Model server appears to be offline")
+    
     socketio.run(app, host="0.0.0.0", port=8000, debug=True)
