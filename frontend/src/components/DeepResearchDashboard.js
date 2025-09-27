@@ -23,6 +23,8 @@ const DeepResearchDashboard = () => {
     isChatReady,
     chatMessages,
     isChatLoading,
+    isStreaming,
+    streamingResponse,
     sendChatMessage,
     clearChat
   } = useDeepResearch();
@@ -56,7 +58,7 @@ const DeepResearchDashboard = () => {
     if (chatRef.current) {
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
-  }, [chatMessages]);
+  }, [chatMessages, streamingResponse]);
 
   // Show chat automatically when ready
   useEffect(() => {
@@ -78,7 +80,7 @@ const DeepResearchDashboard = () => {
   };
 
   const handleChatSubmit = () => {
-    if (chatInput.trim() && !isChatLoading) {
+    if (chatInput.trim() && !isChatLoading && !isStreaming) {
       sendChatMessage(chatInput);
       setChatInput('');
     }
@@ -309,6 +311,51 @@ const DeepResearchDashboard = () => {
               </div>
               <div className={`text-xs mt-1 ${isUser ? 'text-blue-100' : 'text-gray-500'}`}>
                 {message.timestamp}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // NEW: Streaming response component
+  const StreamingMessage = () => {
+    if (!isStreaming || !streamingResponse) return null;
+
+    return (
+      <div className="mb-4 flex justify-start">
+        <div className="max-w-[80%] order-1">
+          <div className="flex items-end gap-2 flex-row">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-500 text-white">
+              <Bot className="w-4 h-4" />
+            </div>
+            <div className="px-4 py-2 rounded-lg max-w-full bg-gray-100 text-gray-800 rounded-bl-sm border-2 border-blue-200 animate-pulse">
+              <div className="text-sm leading-relaxed">
+                <ReactMarkdown 
+                  components={{
+                    p: ({children}) => <p className="mb-2 last:mb-0">{children}</p>,
+                    strong: ({children}) => <strong className="font-semibold">{children}</strong>,
+                    code: ({children}) => <code className="bg-gray-200 px-1 py-0.5 rounded text-xs">{children}</code>,
+                    ul: ({children}) => <ul className="list-disc list-inside mb-2">{children}</ul>,
+                    ol: ({children}) => <ol className="list-decimal list-inside mb-2">{children}</ol>,
+                    li: ({children}) => <li className="mb-1">{children}</li>,
+                  }}
+                >
+                  {streamingResponse}
+                </ReactMarkdown>
+                {/* Typing indicator */}
+                <span className="inline-flex items-center gap-1 ml-1">
+                  <div className="w-1 h-4 bg-blue-500 animate-pulse"></div>
+                </span>
+              </div>
+              <div className="text-xs mt-1 text-blue-600 flex items-center gap-1 font-medium">
+                <span className="flex space-x-1">
+                  <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce"></div>
+                  <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                  <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                </span>
+                <span>Streaming response...</span>
               </div>
             </div>
           </div>
@@ -579,6 +626,11 @@ const DeepResearchDashboard = () => {
                       <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                         <MessageCircle className="w-5 h-5 text-blue-600" />
                         Ask Follow-up Questions
+                        {isStreaming && (
+                          <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full animate-pulse">
+                            AI is responding...
+                          </span>
+                        )}
                       </h3>
                       {chatMessages.length > 0 && (
                         <button
@@ -598,7 +650,11 @@ const DeepResearchDashboard = () => {
                           <ChatMessage key={index} message={message} index={index} />
                         ))}
                         
-                        {isChatLoading && (
+                        {/* Show streaming response */}
+                        <StreamingMessage />
+                        
+                        {/* Show loading indicator only when not streaming */}
+                        {isChatLoading && !isStreaming && (
                           <div className="flex justify-start mb-4">
                             <div className="bg-gray-100 text-gray-800 px-4 py-2 rounded-lg rounded-bl-sm flex items-center gap-2">
                               <div className="flex space-x-1">
@@ -606,7 +662,7 @@ const DeepResearchDashboard = () => {
                                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
                                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                               </div>
-                              <span className="text-sm">Thinking...</span>
+                              <span className="text-sm">Connecting to model...</span>
                             </div>
                           </div>
                         )}
@@ -622,15 +678,15 @@ const DeepResearchDashboard = () => {
                         placeholder="Ask me anything about these research results..."
                         className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                         rows={2}
-                        disabled={isChatLoading}
+                        disabled={isChatLoading || isStreaming}
                       />
                       <button
                         onClick={handleChatSubmit}
-                        disabled={!chatInput.trim() || isChatLoading}
+                        disabled={!chatInput.trim() || isChatLoading || isStreaming}
                         className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 flex items-center gap-2 font-medium transition-colors"
                       >
                         <Send className="w-5 h-5" />
-                        Send
+                        {isStreaming ? 'Streaming...' : 'Send'}
                       </button>
                     </div>
                   </div>
