@@ -71,6 +71,8 @@ npm install
 
 ### 3. Configure Environment
 ```bash
+edit this file > inference/run_react_infer_with_progress.sh
+
 export SERPER_KEY_ID="your-serper-api-key"
 export API_BASE="http://localhost:8080/v1"
 export READERLM_ENDPOINT="http://localhost:8081/v1"
