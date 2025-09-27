@@ -1,6 +1,5 @@
 # LocalDeepResearch
 
-
 A comprehensive AI-powered research platform that combines autonomous research agents with interactive chat capabilities.
 
 ## Features
@@ -13,7 +12,21 @@ A comprehensive AI-powered research platform that combines autonomous research a
 
 ## Demo
 
-![https://github.com/gopinath87607/LocalDeepResearch/blob/main/Screencast%20from%202025-09-26%2020-11-24.webm)
+### Video Demo
+![Demo Video](https://github.com/gopinath87607/LocalDeepResearch/blob/main/Screencast%20from%202025-09-26%2020-11-24.webm)
+
+*Note: If the video doesn't play directly in GitHub, you can [view it here](https://github.com/gopinath87607/LocalDeepResearch/blob/main/Screencast%20from%202025-09-26%2020-11-24.webm)*
+
+### Screenshots
+
+**Main Dashboard**
+![Dashboard Screenshot](https://github.com/gopinath87607/LocalDeepResearch/blob/main/Screenshot%20from%202025-09-26%2020-49-33.png)
+
+**Research Interface**
+![Research Interface](https://github.com/gopinath87607/LocalDeepResearch/blob/main/Screenshot%20from%202025-09-26%2020-51-17.png)
+
+**Chat Interface**
+![Chat Interface](https://github.com/gopinath87607/LocalDeepResearch/blob/main/Screenshot%20from%202025-09-26%2020-51-22.png)
 
 ## Quick Start
 
@@ -25,8 +38,8 @@ A comprehensive AI-powered research platform that combines autonomous research a
 
 ### 1. Clone and Setup
 ```bash
-git clone https://github.com/yourusername/DeepResearch.git
-cd DeepResearch
+git clone https://github.com/gopinath87607/LocalDeepResearch.git
+cd LocalDeepResearch
 
 # Backend setup
 cd backend
@@ -150,8 +163,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Support
 
 - 📖 [Documentation](docs/)
-- 🐛 [Issue Tracker](https://github.com/yourusername/DeepResearch/issues)
-- 💬 [Discussions](https://github.com/yourusername/DeepResearch/discussions)
+- 🐛 [Issue Tracker](https://github.com/gopinath87607/LocalDeepResearch/issues)
+- 💬 [Discussions](https://github.com/gopinath87607/LocalDeepResearch/discussions)
 
 ---
 
