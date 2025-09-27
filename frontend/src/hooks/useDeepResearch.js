@@ -17,10 +17,12 @@ export const useDeepResearch = () => {
   const [groupedLogs, setGroupedLogs] = useState([]);
   const [websiteLinks, setWebsiteLinks] = useState([]);
   
-  // Chat functionality
+  // Chat functionality with streaming
   const [isChatReady, setIsChatReady] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [streamingResponse, setStreamingResponse] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
   
   const socketRef = useRef(null);
 
@@ -40,6 +42,8 @@ export const useDeepResearch = () => {
       setIsChatReady(false);
       setChatMessages([]);
       setIsChatLoading(false);
+      setStreamingResponse('');
+      setIsStreaming(false);
 
       const response = await fetch(`${API_BASE}/api/research/start`, {
         method: 'POST',
@@ -106,6 +110,8 @@ export const useDeepResearch = () => {
     // Add user message immediately
     setChatMessages(prev => [...prev, userMessage]);
     setIsChatLoading(true);
+    setStreamingResponse('');
+    setIsStreaming(false);
 
     try {
       const response = await fetch(`${API_BASE}/api/chat/send`, {
@@ -131,6 +137,8 @@ export const useDeepResearch = () => {
         timestamp: new Date().toLocaleTimeString()
       }]);
       setIsChatLoading(false);
+      setStreamingResponse('');
+      setIsStreaming(false);
     }
   }, [sessionId, isChatLoading]);
 
@@ -171,8 +179,21 @@ export const useDeepResearch = () => {
         }]);
         break;
 
+      // NEW: Streaming chat events
+      case 'chat_stream_start':
+        setIsStreaming(true);
+        setIsChatLoading(false);
+        setStreamingResponse('');
+        break;
+
+      case 'chat_stream_chunk':
+        setStreamingResponse(update.full_response || update.chunk);
+        break;
+
       case 'chat_response':
         setIsChatLoading(false);
+        setIsStreaming(false);
+        setStreamingResponse('');
         setChatMessages(prev => [...prev, {
           role: 'assistant',
           content: update.message,
@@ -182,6 +203,8 @@ export const useDeepResearch = () => {
 
       case 'chat_error':
         setIsChatLoading(false);
+        setIsStreaming(false);
+        setStreamingResponse('');
         setChatMessages(prev => [...prev, {
           role: 'assistant',
           content: update.message,
@@ -193,6 +216,7 @@ export const useDeepResearch = () => {
         setError(update.message);
         setIsResearching(false);
         setIsChatLoading(false);
+        setIsStreaming(false);
         break;
 
       // Handle URL events from backend
@@ -314,10 +338,12 @@ export const useDeepResearch = () => {
     groupedLogs,
     websiteLinks,
     
-    // Chat functionality
+    // Chat functionality with streaming
     isChatReady,
     chatMessages,
     isChatLoading,
+    isStreaming,
+    streamingResponse,
     sendChatMessage,
     
     clearLogs: () => {
@@ -329,6 +355,8 @@ export const useDeepResearch = () => {
     },
     clearChat: () => {
       setChatMessages([]);
+      setStreamingResponse('');
+      setIsStreaming(false);
     }
   };
 };
