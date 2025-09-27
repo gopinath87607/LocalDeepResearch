@@ -41,6 +41,16 @@ A comprehensive AI-powered research platform that combines autonomous research a
 git clone https://github.com/gopinath87607/LocalDeepResearch.git
 cd LocalDeepResearch
 
+# Create isolated environment with Python 3.10.0
+conda create -n LocalDeepResearch_env python=3.10.0
+conda activate LocalDeepResearch_env
+
+# Or using virtualenv
+python3.10 -m venv LocalDeepResearch_env
+source LocalDeepResearch_env/bin/activate  # On Windows: deepresearch_env\Scripts\activate
+
+pip install -r requirements.txt
+
 # Backend setup
 cd backend
 pip install -r requirements.txt
