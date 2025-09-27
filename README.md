@@ -15,7 +15,7 @@ A comprehensive AI-powered research platform that combines autonomous research a
 ### Video Demo
 ![Demo Video](https://github.com/gopinath87607/LocalDeepResearch/blob/main/Screencast%20from%202025-09-26%2020-11-24.webm)
 
-*Note: If the video doesn't play directly in GitHub, you can [dowload it here](https://github.com/gopinath87607/LocalDeepResearch/blob/main/Screencast%20from%202025-09-26%2020-11-24.webm)*
+*Note: If the video doesn't play directly in GitHub, you can [view it here](https://github.com/gopinath87607/LocalDeepResearch/blob/main/Screencast%20from%202025-09-26%2020-11-24.webm)*
 
 ### Screenshots
 
@@ -156,6 +156,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
+- [DeepResearch by Alibaba-NLP](https://github.com/Alibaba-NLP/DeepResearch) for the core research agent implementation and methodologies
 - [llama.cpp](https://github.com/ggerganov/llama.cpp) for local LLM inference
 - [Serper](https://serper.dev) for web search API
 - Research methodologies inspired by various AI research frameworks
