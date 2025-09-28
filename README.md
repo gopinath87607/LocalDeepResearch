@@ -182,4 +182,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
+Note all out put is saved here
+output_dir = f"/home/XXX/DeepResearch/outputs/session_{session_id}"
+
 **⭐ Star this repo if you find it useful!**
